@@ -4,13 +4,12 @@
 //
 // Public interface for the raw TCP server.
 //
-// Design principle (Increment 1):
-//   We deliberately expose only what the caller (main.cpp) needs.
-//   The socket lifecycle (init → create → bind → listen → accept → recv/send → close)
-//   is hidden behind three clean functions.
+// Design principle (Increment 2):
+//   We expose the socket lifecycle but now integrate the HTTP router.
 //
 
 #include <string>
+#include "../http/router.h"
 
 namespace revres {
 
@@ -22,9 +21,9 @@ void winsock_init();
 void winsock_cleanup();
 
 // Runs the server loop on the given port.
-// Accepts one client at a time, prints every received byte to stdout,
-// sends a plain-text acknowledgement, then closes the connection.
+// Accepts one client at a time, passes the raw buffer to the HTTP parser,
+// routes the request, and sends back the serialized HTTP response.
 // Never returns (loops forever).  Throws std::runtime_error on fatal errors.
-void run_server(unsigned short port);
+void run_server(unsigned short port, const http::Router& router);
 
 } // namespace revres

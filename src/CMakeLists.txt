@@ -3,6 +3,11 @@
 add_executable(revres
     main.cpp
     server/tcp_server.cpp
+    http/request.cpp
+    http/response.cpp
+    http/parser.cpp
+    http/router.cpp
+    handlers/static_handler.cpp
 )
 
 target_include_directories(revres PRIVATE

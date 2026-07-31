@@ -11,7 +11,8 @@
 #include <array>
 
 #include "tcp_server.h"
-
+#include "../http/parser.h"
+#include "../http/router.h"
 namespace revres {
 
 static std::string wsa_error_string(int code) {
@@ -53,7 +54,7 @@ void winsock_cleanup() {
     std::cout << "[winsock] Cleaned up.\n";
 }
 
-void run_server(unsigned short port) {
+void run_server(unsigned short port, const http::Router& router) {
 
 
     SOCKET listen_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -113,23 +114,34 @@ void run_server(unsigned short port) {
             std::cout << "── Raw bytes received (" << bytes_received << " bytes) ──\n";
             std::cout << buf.data() << "\n";
             std::cout << "────────────────────────────────────────────────\n\n";
+            
+            // Parse HTTP request
+            auto req_opt = http::parse_request(buf.data());
+            
+            std::string serialized_res;
+            if (req_opt) {
+                // Route the request
+                http::HttpResponse res = router.route(*req_opt);
+                serialized_res = res.serialize();
+            } else {
+                // Bad request
+                http::HttpResponse bad(400, "Bad Request");
+                bad.set_content_type("text/plain");
+                bad.set_body("400 Bad Request - Malformed HTTP request");
+                serialized_res = bad.serialize();
+            }
+
+            int bytes_sent = send(client_fd, serialized_res.c_str(),
+                                  static_cast<int>(serialized_res.size()), 0);
+            if (bytes_sent == SOCKET_ERROR) {
+                std::cerr << "[server] send() error: " << wsa_error_string(WSAGetLastError()) << "\n";
+            } else {
+                std::cout << "[server] Sent " << bytes_sent << " bytes.\n";
+            }
         } else if (bytes_received == 0) {
             std::cout << "[client] Connection closed before sending data.\n";
         } else {
             std::cerr << "[server] recv() error: " << wsa_error_string(WSAGetLastError()) << "\n";
-        }
-
-        const std::string response =
-            "Hello from Revres TCP server!\r\n"
-            "You sent " + std::to_string(bytes_received) + " bytes.\r\n"
-            "HTTP parsing is not implemented yet — stay tuned!\r\n";
-
-        int bytes_sent = send(client_fd, response.c_str(),
-                              static_cast<int>(response.size()), 0);
-        if (bytes_sent == SOCKET_ERROR) {
-            std::cerr << "[server] send() error: " << wsa_error_string(WSAGetLastError()) << "\n";
-        } else {
-            std::cout << "[server] Sent " << bytes_sent << " bytes.\n";
         }
 
         closesocket(client_fd);
