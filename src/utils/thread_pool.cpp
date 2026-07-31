@@ -1,4 +1,5 @@
 #include "thread_pool.h"
+#include <stdexcept>
 
 namespace revres {
 namespace utils {

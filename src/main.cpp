@@ -61,7 +61,7 @@ int main(int argc, char* argv[]) {
         
         revres::winsock_cleanup();
     } catch (const std::exception& e) {
-        LOG_ERROR(std::string("Fatal exception: ") + e.what());
+        LOG_ERR(std::string("Fatal exception: ") + e.what());
         revres::winsock_cleanup();
         return 1;
     }

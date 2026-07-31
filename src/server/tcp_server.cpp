@@ -91,12 +91,12 @@ void handle_client(SOCKET client_fd, const http::Router& router, std::string cli
                 try {
                     res = router.route(*req_opt);
                 } catch (const std::exception& e) {
-                    LOG_ERROR("Handler threw exception: " + std::string(e.what()));
+                    LOG_ERR("Handler threw exception: " + std::string(e.what()));
                     res.set_status(500, "Internal Server Error");
                     res.set_content_type("text/plain");
                     res.set_body("500 Internal Server Error");
                 } catch (...) {
-                    LOG_ERROR("Handler threw unknown exception.");
+                    LOG_ERR("Handler threw unknown exception.");
                     res.set_status(500, "Internal Server Error");
                     res.set_content_type("text/plain");
                     res.set_body("500 Internal Server Error");
@@ -200,7 +200,7 @@ void run_server(unsigned short port, const http::Router& router) {
             SOCKET client_fd = accept(listen_fd, reinterpret_cast<sockaddr*>(&client_addr), &client_addr_len);
             
             if (client_fd == INVALID_SOCKET) {
-                LOG_ERROR("accept() failed: " + wsa_error_string(WSAGetLastError()));
+                LOG_ERR("accept() failed: " + wsa_error_string(WSAGetLastError()));
                 continue;
             }
 

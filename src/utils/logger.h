@@ -11,7 +11,7 @@ enum class LogLevel {
     DEBUG,
     INFO,
     WARN,
-    ERROR
+    LEVEL_ERROR  // Named LEVEL_ERROR to avoid collision with Windows #define ERROR 0
 };
 
 class Logger {
@@ -24,7 +24,7 @@ public:
     void debug(const std::string& message) { log(LogLevel::DEBUG, message); }
     void info(const std::string& message) { log(LogLevel::INFO, message); }
     void warn(const std::string& message) { log(LogLevel::WARN, message); }
-    void error(const std::string& message) { log(LogLevel::ERROR, message); }
+    void error(const std::string& message) { log(LogLevel::LEVEL_ERROR, message); }
 
 private:
     Logger() = default;
@@ -37,7 +37,8 @@ private:
 #define LOG_DEBUG(msg) revres::utils::Logger::instance().debug(msg)
 #define LOG_INFO(msg)  revres::utils::Logger::instance().info(msg)
 #define LOG_WARN(msg)  revres::utils::Logger::instance().warn(msg)
-#define LOG_ERROR(msg) revres::utils::Logger::instance().error(msg)
+// Note: macro named LOG_ERR (not LOG_ERROR) to avoid any further Windows macro clashes
+#define LOG_ERR(msg)   revres::utils::Logger::instance().error(msg)
 
 } // namespace utils
 } // namespace revres
