@@ -8,6 +8,9 @@ add_executable(revres
     http/parser.cpp
     http/router.cpp
     handlers/static_handler.cpp
+    utils/logger.cpp
+    utils/mime.cpp
+    utils/thread_pool.cpp
 )
 
 target_include_directories(revres PRIVATE

@@ -17,9 +17,6 @@ public:
 
 private:
     std::string base_path_;
-    
-    // Helper to determine the MIME type based on file extension
-    std::string get_mime_type(const std::string& path) const;
 };
 
 } // namespace handlers

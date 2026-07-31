@@ -23,7 +23,10 @@ void winsock_cleanup();
 // Runs the server loop on the given port.
 // Accepts one client at a time, passes the raw buffer to the HTTP parser,
 // routes the request, and sends back the serialized HTTP response.
-// Never returns (loops forever).  Throws std::runtime_error on fatal errors.
+// Will loop until stop_server() is called. Throws std::runtime_error on fatal errors.
 void run_server(unsigned short port, const http::Router& router);
+
+// Signals the server to stop gracefully.
+void stop_server();
 
 } // namespace revres

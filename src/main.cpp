@@ -1,24 +1,36 @@
 //
-// main.cpp — Increment 2 entry point
+// main.cpp — Increment 3 entry point
 //
 // Responsibilities:
 //   1. Parse (optional) command-line port argument
-//   2. Initialise Winsock
-//   3. Set up the HTTP Router and Handlers
-//   4. Start the TCP server loop, passing the router
-//   5. Clean up on exit
+//   2. Register signal handlers for graceful shutdown (SIGINT)
+//   3. Initialise Winsock
+//   4. Set up the HTTP Router and Handlers
+//   5. Start the TCP server loop
+//   6. Clean up on exit
 //
 
 #include <iostream>
 #include <stdexcept>
 #include <cstdlib>    // std::atoi
+#include <csignal>    // std::signal
 
 #include "server/tcp_server.h"
 #include "http/router.h"
 #include "handlers/static_handler.h"
+#include "utils/logger.h"
+
+// Signal handler for graceful shutdown
+void handle_sigint(int /*signal*/) {
+    std::cout << "\n";
+    // Notify the server loop to stop
+    revres::stop_server();
+}
 
 int main(int argc, char* argv[]) {
-    // Allow overriding the port via: revres.exe 9090
+    // Register Ctrl+C handler
+    std::signal(SIGINT, handle_sigint);
+
     unsigned short port = 8080;
     if (argc >= 2) {
         int p = std::atoi(argv[1]);
@@ -29,33 +41,27 @@ int main(int argc, char* argv[]) {
         port = static_cast<unsigned short>(p);
     }
 
-    std::cout << "╔══════════════════════════════════════╗\n";
-    std::cout << "║   Revres — Increment 2 (HTTP)        ║\n";
-    std::cout << "╚══════════════════════════════════════╝\n\n";
-
     try {
         revres::winsock_init();
 
-        // 1. Create the router
         revres::http::Router router;
-
-        // 2. Set up the static handler
-        // Assuming we run the executable from the project root.
-        // It will look for files in the "static" directory.
         revres::handlers::StaticHandler static_handler("static");
 
-        // 3. Register the static handler as the fallback for all unmatched routes
-        // We capture it by reference since it outlives the server loop
         router.set_fallback([&static_handler](const revres::http::HttpRequest& req) {
             return static_handler.handle(req);
         });
 
-        // 4. Run the server
-        revres::run_server(port, router);   // Never returns
+        // Test route to simulate a crash (500 error)
+        router.add_route("GET", "/crash", [](const revres::http::HttpRequest&) {
+            throw std::runtime_error("Simulated crash!");
+            return revres::http::HttpResponse(); // unreachable
+        });
+
+        revres::run_server(port, router);
         
-        revres::winsock_cleanup();  // Called only if loop ever ends
+        revres::winsock_cleanup();
     } catch (const std::exception& e) {
-        std::cerr << "\n[FATAL] " << e.what() << "\n";
+        LOG_ERROR(std::string("Fatal exception: ") + e.what());
         revres::winsock_cleanup();
         return 1;
     }
